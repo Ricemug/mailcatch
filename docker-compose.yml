@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  fakesmtp:
+    build: .
+    image: fakesmtp:latest
+    container_name: fakesmtp
+    ports:
+      - "2525:2525"    # SMTP port
+      - "8080:8080"    # Web UI port
+    volumes:
+      - ./data:/app/data    # Persistent email storage
+    environment:
+      - SMTP_PORT=2525
+      - HTTP_PORT=8080
+      - DB_PATH=/app/data/emails.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/stats"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Alternative configuration with custom ports
+  # fakesmtp-custom:
+  #   build: .
+  #   image: fakesmtp:latest
+  #   container_name: fakesmtp-custom
+  #   ports:
+  #     - "1025:2525"    # Custom SMTP port
+  #     - "3000:8080"    # Custom Web UI port
+  #   volumes:
+  #     - ./data:/app/data
+  #   environment:
+  #     - SMTP_PORT=2525
+  #     - HTTP_PORT=8080
+  #     - DB_PATH=/app/data/emails.db
+  #   restart: unless-stopped
+
+# Create a network for the application
+networks:
+  default:
+    name: fakesmtp-network
+
+# Define volume for data persistence
+volumes:
+  data:
+    driver: local

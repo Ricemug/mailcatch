@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FakeSMTP - Email Testing Server</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        function App() {
+            const [emails, setEmails] = useState([]);
+            const [selectedEmail, setSelectedEmail] = useState(null);
+            const [stats, setStats] = useState({ total_emails: 0, connected_clients: 0 });
+            const [isConnected, setIsConnected] = useState(false);
+            const wsRef = useRef(null);
+
+            // Load initial emails
+            useEffect(() => {
+                fetchEmails();
+                fetchStats();
+                connectWebSocket();
+                
+                return () => {
+                    if (wsRef.current) {
+                        wsRef.current.close();
+                    }
+                };
+            }, []);
+
+            const fetchEmails = async () => {
+                try {
+                    const response = await fetch('/api/emails');
+                    const data = await response.json();
+                    setEmails(data || []);
+                } catch (error) {
+                    console.error('Error fetching emails:', error);
+                }
+            };
+
+            const fetchStats = async () => {
+                try {
+                    const response = await fetch('/api/stats');
+                    const data = await response.json();
+                    setStats(data);
+                } catch (error) {
+                    console.error('Error fetching stats:', error);
+                }
+            };
+
+            const connectWebSocket = () => {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws`;
+                
+                wsRef.current = new WebSocket(wsUrl);
+                
+                wsRef.current.onopen = () => {
+                    setIsConnected(true);
+                    console.log('WebSocket connected');
+                };
+                
+                wsRef.current.onclose = () => {
+                    setIsConnected(false);
+                    console.log('WebSocket disconnected');
+                    // Reconnect after 3 seconds
+                    setTimeout(connectWebSocket, 3000);
+                };
+                
+                wsRef.current.onmessage = (event) => {
+                    try {
+                        const message = JSON.parse(event.data);
+                        if (message.type === 'new_email') {
+                            setEmails(prev => [message.data, ...prev]);
+                            fetchStats();
+                        }
+                    } catch (error) {
+                        console.error('Error parsing WebSocket message:', error);
+                    }
+                };
+            };
+
+            const selectEmail = async (emailId) => {
+                try {
+                    const response = await fetch(`/api/emails/${emailId}`);
+                    const data = await response.json();
+                    setSelectedEmail(data);
+                } catch (error) {
+                    console.error('Error fetching email details:', error);
+                }
+            };
+
+            const deleteEmail = async (emailId) => {
+                try {
+                    await fetch(`/api/emails/${emailId}`, { method: 'DELETE' });
+                    setEmails(prev => prev.filter(email => email.id !== emailId));
+                    if (selectedEmail && selectedEmail.id === emailId) {
+                        setSelectedEmail(null);
+                    }
+                    fetchStats();
+                } catch (error) {
+                    console.error('Error deleting email:', error);
+                }
+            };
+
+            const clearAllEmails = async () => {
+                if (!confirm('Are you sure you want to delete all emails?')) return;
+                
+                try {
+                    await fetch('/api/emails', { method: 'DELETE' });
+                    setEmails([]);
+                    setSelectedEmail(null);
+                    fetchStats();
+                } catch (error) {
+                    console.error('Error clearing emails:', error);
+                }
+            };
+
+            const formatDate = (dateString) => {
+                return new Date(dateString).toLocaleString();
+            };
+
+            return (
+                <div className="min-h-screen">
+                    {/* Header */}
+                    <header className="bg-blue-600 text-white p-4">
+                        <div className="container mx-auto flex justify-between items-center">
+                            <h1 className="text-2xl font-bold">FakeSMTP</h1>
+                            <div className="flex items-center gap-4">
+                                <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                                <span className="text-sm">
+                                    {stats.total_emails} emails | {stats.connected_clients} clients
+                                </span>
+                                <button
+                                    onClick={clearAllEmails}
+                                    className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm"
+                                    disabled={emails.length === 0}
+                                >
+                                    Clear All
+                                </button>
+                            </div>
+                        </div>
+                    </header>
+
+                    <div className="flex h-screen pt-4">
+                        {/* Email List */}
+                        <div className="w-1/3 border-r bg-white">
+                            <div className="p-4 border-b">
+                                <h2 className="text-lg font-semibold">Emails ({emails.length})</h2>
+                            </div>
+                            <div className="overflow-y-auto" style={{height: 'calc(100vh - 140px)'}}>
+                                {emails.length === 0 ? (
+                                    <div className="p-4 text-gray-500 text-center">
+                                        No emails received yet. Send an email to port 2525 to get started.
+                                    </div>
+                                ) : (
+                                    emails.map(email => (
+                                        <div
+                                            key={email.id}
+                                            className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${
+                                                selectedEmail && selectedEmail.id === email.id ? 'bg-blue-50' : ''
+                                            }`}
+                                            onClick={() => selectEmail(email.id)}
+                                        >
+                                            <div className="flex justify-between items-start mb-1">
+                                                <div className="font-medium text-sm truncate flex-1">{email.from}</div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deleteEmail(email.id);
+                                                    }}
+                                                    className="text-red-500 hover:text-red-700 ml-2"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                            <div className="text-sm text-gray-600 truncate mb-1">{email.subject}</div>
+                                            <div className="text-xs text-gray-400">{formatDate(email.created_at)}</div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Email Content */}
+                        <div className="flex-1 bg-white">
+                            {selectedEmail ? (
+                                <div className="h-full flex flex-col">
+                                    <div className="p-4 border-b">
+                                        <h3 className="text-lg font-semibold mb-2">{selectedEmail.subject}</h3>
+                                        <div className="text-sm text-gray-600 space-y-1">
+                                            <div><strong>From:</strong> {selectedEmail.from}</div>
+                                            <div><strong>To:</strong> {selectedEmail.to}</div>
+                                            <div><strong>Date:</strong> {formatDate(selectedEmail.created_at)}</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto">
+                                        {selectedEmail.html ? (
+                                            <div className="p-4">
+                                                <div className="mb-4">
+                                                    <button className="text-blue-600 hover:underline text-sm mr-4">
+                                                        HTML View
+                                                    </button>
+                                                    <button 
+                                                        className="text-gray-600 hover:underline text-sm"
+                                                        onClick={() => {
+                                                            const newEmail = {...selectedEmail, html: null};
+                                                            setSelectedEmail(newEmail);
+                                                        }}
+                                                    >
+                                                        Text View
+                                                    </button>
+                                                </div>
+                                                <div 
+                                                    className="border rounded p-4"
+                                                    dangerouslySetInnerHTML={{ __html: selectedEmail.html }}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="p-4">
+                                                <div className="mb-4">
+                                                    {selectedEmail.html && (
+                                                        <>
+                                                            <button 
+                                                                className="text-gray-600 hover:underline text-sm mr-4"
+                                                                onClick={() => selectEmail(selectedEmail.id)}
+                                                            >
+                                                                HTML View
+                                                            </button>
+                                                            <button className="text-blue-600 hover:underline text-sm">
+                                                                Text View
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                                <pre className="whitespace-pre-wrap font-mono text-sm">
+                                                    {selectedEmail.body}
+                                                </pre>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-gray-500">
+                                    Select an email to view its content
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+[Unit]
+Description=FakeSMTP Email Testing Server
+Documentation=https://github.com/your-username/fakesmtp
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=fakesmtp
+Group=fakesmtp
+Environment=SMTP_PORT=2525
+Environment=HTTP_PORT=8080
+Environment=CLEAR_ON_SHUTDOWN=true
+ExecStart=/usr/local/bin/fakesmtp --daemon
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+
+# Security settings
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/fakesmtp
+
+# Resource limits
+LimitNOFILE=65536
+LimitMEMLOCK=infinity
+
+[Install]
+WantedBy=multi-user.target
