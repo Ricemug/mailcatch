@@ -1,6 +1,6 @@
-# FakeSMTP Build Configuration
+# MailCatch Build Configuration
 
-APP_NAME = fakesmtp
+APP_NAME = mailcatch
 VERSION = v1.0.0
 BUILD_DIR = build
 CMD_DIR = cmd/server

@@ -1,6 +1,6 @@
 package storage
 
-import "fakesmtp/internal/models"
+import "mailcatch/internal/models"
 
 // Storage defines the interface for email storage implementations
 type Storage interface {

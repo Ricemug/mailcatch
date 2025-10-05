@@ -1,13 +1,13 @@
 #!/bin/bash
-# FakeSMTP Installation Script
+# MailCatch Installation Script
 
 set -e
 
 # Configuration
-BINARY_NAME="fakesmtp"
+BINARY_NAME="mailcatch"
 INSTALL_DIR="/usr/local/bin"
-SERVICE_NAME="fakesmtp"
-USER="fakesmtp"
+SERVICE_NAME="mailcatch"
+USER="mailcatch"
 
 # Colors for output
 RED='\033[0;31m'
@@ -44,7 +44,7 @@ detect_platform() {
 
 # Download binary
 download_binary() {
-    DOWNLOAD_URL="https://github.com/your-username/fakesmtp/releases/latest/download/fakesmtp-$OS-$ARCH"
+    DOWNLOAD_URL="https://github.com/your-username/mailcatch/releases/latest/download/mailcatch-$OS-$ARCH"
     
     log_info "Downloading $BINARY_NAME..."
     
@@ -81,9 +81,9 @@ create_systemd_service() {
     
     log_info "Creating systemd service..."
     
-    cat > /tmp/fakesmtp.service << EOF
+    cat > /tmp/mailcatch.service << EOF
 [Unit]
-Description=FakeSMTP Email Testing Server
+Description=MailCatch Email Testing Server
 After=network.target
 
 [Service]
@@ -99,15 +99,15 @@ WantedBy=multi-user.target
 EOF
 
     if [[ $EUID -ne 0 ]]; then
-        sudo mv /tmp/fakesmtp.service /etc/systemd/system/
+        sudo mv /tmp/mailcatch.service /etc/systemd/system/
         sudo systemctl daemon-reload
-        sudo systemctl enable fakesmtp
-        log_info "Systemd service created. Use 'sudo systemctl start fakesmtp' to start"
+        sudo systemctl enable mailcatch
+        log_info "Systemd service created. Use 'sudo systemctl start mailcatch' to start"
     else
-        mv /tmp/fakesmtp.service /etc/systemd/system/
+        mv /tmp/mailcatch.service /etc/systemd/system/
         systemctl daemon-reload
-        systemctl enable fakesmtp
-        log_info "Systemd service created. Use 'systemctl start fakesmtp' to start"
+        systemctl enable mailcatch
+        log_info "Systemd service created. Use 'systemctl start mailcatch' to start"
     fi
 }
 
@@ -129,7 +129,7 @@ create_user() {
 
 # Main installation
 main() {
-    log_info "Starting FakeSMTP installation..."
+    log_info "Starting MailCatch installation..."
     
     detect_platform
     download_binary
@@ -140,11 +140,11 @@ main() {
         create_systemd_service
     fi
     
-    log_info "FakeSMTP installed successfully!"
-    log_info "Run 'fakesmtp --help' to see available options"
+    log_info "MailCatch installed successfully!"
+    log_info "Run 'mailcatch --help' to see available options"
     
     if [[ "$1" == "--service" ]]; then
-        log_info "Service installed. Start with: sudo systemctl start fakesmtp"
+        log_info "Service installed. Start with: sudo systemctl start mailcatch"
     fi
 }
 

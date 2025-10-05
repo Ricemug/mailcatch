@@ -8,7 +8,7 @@ import (
 	"sort"
 	"sync"
 
-	"fakesmtp/internal/models"
+	"mailcatch/internal/models"
 )
 
 type MemoryStorage struct {

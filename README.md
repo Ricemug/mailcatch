@@ -1,4 +1,4 @@
-# FakeSMTP
+# MailCatch
 
 A lightweight, cross-platform fake SMTP server for email testing and development.
 
@@ -33,31 +33,34 @@ A lightweight, cross-platform fake SMTP server for email testing and development
 
 ```bash
 # macOS
-chmod +x fakesmtp-darwin-arm64
-./fakesmtp-darwin-arm64
+chmod +x mailcatch-darwin-arm64
+./mailcatch-darwin-arm64
 
 # Linux
-chmod +x fakesmtp-linux-amd64
-./fakesmtp-linux-amd64
+chmod +x mailcatch-linux-amd64
+./mailcatch-linux-amd64
 
 # Windows
-fakesmtp-windows-amd64.exe
+mailcatch-windows-amd64.exe
 ```
 
 ### Docker/Podman
 
 ```bash
 # Quick start
-docker run -p 2525:2525 -p 8080:8080 fakesmtp:latest
+docker run -p 2525:2525 -p 8080:8080 mailcatch:latest
 
 # With persistent storage
 docker run -p 2525:2525 -p 8080:8080 \
   -v ./data:/app/data \
   -v ./logs:/app/logs \
-  fakesmtp:latest
+  mailcatch:latest
 
 # Podman (same commands)
-podman run -p 2525:2525 -p 8080:8080 fakesmtp:latest
+podman run -p 2525:2525 -p 8080:8080 mailcatch:latest
+
+# Podman + Systemd (rootless, recommended)
+./scripts/setup-podman-systemd.sh
 ```
 
 ### Access
@@ -70,13 +73,13 @@ podman run -p 2525:2525 -p 8080:8080 fakesmtp:latest
 ### Command Line Options
 
 ```bash
-./fakesmtp [OPTIONS]
+./mailcatch [OPTIONS]
 
 Options:
   --smtp-port=2525              SMTP server port
   --http-port=8080              Web UI port  
   --db-path=./data/emails.db    Database file path
-  --log-path=/tmp/fakesmtp.log  Log file path
+  --log-path=/tmp/mailcatch.log  Log file path
   --clear-on-shutdown=true      Clear emails on shutdown
   --daemon=false                Run in background mode
   --help                        Show help
@@ -87,7 +90,7 @@ Options:
 ```bash
 export SMTP_PORT=1025
 export HTTP_PORT=3000
-export LOG_PATH=/var/log/fakesmtp.log
+export LOG_PATH=/var/log/mailcatch.log
 export CLEAR_ON_SHUTDOWN=false
 export DAEMON=true
 ```
@@ -96,16 +99,16 @@ export DAEMON=true
 
 ```bash
 # Basic usage
-./fakesmtp
+./mailcatch
 
 # Custom ports
-./fakesmtp --smtp-port=1025 --http-port=3000
+./mailcatch --smtp-port=1025 --http-port=3000
 
 # Background mode
-./fakesmtp --daemon --log-path=/var/log/fakesmtp.log
+./mailcatch --daemon --log-path=/var/log/mailcatch.log
 
 # Keep emails between restarts
-./fakesmtp --clear-on-shutdown=false
+./mailcatch --clear-on-shutdown=false
 ```
 
 ## Sending Test Emails
@@ -116,7 +119,7 @@ export DAEMON=true
 import smtplib
 from email.mime.text import MIMEText
 
-msg = MIMEText("Hello from FakeSMTP!")
+msg = MIMEText("Hello from MailCatch!")
 msg['Subject'] = 'Test Email'
 msg['From'] = 'sender@example.com'
 msg['To'] = 'recipient@example.com'
@@ -162,15 +165,15 @@ This is a test!
 QUIT
 ```
 
-## Docker Usage
+## Docker/Podman Usage
 
 ### Docker Compose
 
 ```yaml
 version: '3.8'
 services:
-  fakesmtp:
-    image: fakesmtp:latest
+  mailcatch:
+    image: mailcatch:latest
     ports:
       - "2525:2525"
       - "8080:8080"
@@ -183,6 +186,23 @@ services:
 ```
 
 Run: `docker-compose up -d`
+
+### Podman + Systemd (Recommended)
+
+Using rootless containers with systemd service management:
+
+```bash
+# Quick setup
+./scripts/setup-podman-systemd.sh
+
+# Custom configuration
+./scripts/setup-podman-systemd.sh --smtp-port 1025 --web-port 3000
+
+# Enable boot startup
+sudo loginctl enable-linger $USER
+```
+
+Detailed documentation: [PODMAN_SYSTEMD.md](PODMAN_SYSTEMD.md)
 
 ## API Reference
 
@@ -216,14 +236,14 @@ lsof -i :2525
 netstat -tulpn | grep 2525
 
 # Use different port
-./fakesmtp --smtp-port=1025
+./mailcatch --smtp-port=1025
 ```
 
 ### Permission Issues
 
 ```bash
 # Make executable
-chmod +x fakesmtp-*
+chmod +x mailcatch-*
 
 # Fix Docker volumes
 sudo chown -R 1000:1000 ./data ./logs
@@ -236,12 +256,29 @@ sudo chown -R 1000:1000 ./data ./logs
 rm -f data/emails.bolt
 
 # Check logs
-tail -f /tmp/fakesmtp.log
+tail -f /tmp/mailcatch.log
 ```
 
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+## Support This Project
+
+If MailCatch has been helpful for your development workflow, please consider supporting its development:
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5f5f?logo=ko-fi)](https://ko-fi.com/ivanh0906)
+
+### Other Ways to Support
+
+- ⭐ **Star this repository** on GitHub
+- 🐛 **Report bugs** and request features
+- 🤝 **Contribute code** - see [CONTRIBUTING.md](.github/CONTRIBUTING.md)
+- 📢 **Share** with your team and community
+
+Your support helps maintain and improve MailCatch for the entire community!
 
 ---
 

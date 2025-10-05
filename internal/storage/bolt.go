@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"fakesmtp/internal/models"
+	"mailcatch/internal/models"
 	"go.etcd.io/bbolt"
 )
 

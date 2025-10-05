@@ -64,16 +64,16 @@ jobs:
       run: |
         GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build \
           -ldflags "-s -w -X main.version=${{ steps.version.outputs.version }}" \
-          -o build/fakesmtp-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }} \
+          -o build/mailcatch-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }} \
           ./cmd/server
     
     - name: Create archive
       run: |
         cd build
         if [[ "${{ matrix.os }}" == "windows" ]]; then
-          zip fakesmtp-${{ matrix.os }}-${{ matrix.arch }}.zip fakesmtp-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}
+          zip mailcatch-${{ matrix.os }}-${{ matrix.arch }}.zip mailcatch-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}
         else
-          tar -czf fakesmtp-${{ matrix.os }}-${{ matrix.arch }}.tar.gz fakesmtp-${{ matrix.os }}-${{ matrix.arch }}
+          tar -czf mailcatch-${{ matrix.os }}-${{ matrix.arch }}.tar.gz mailcatch-${{ matrix.os }}-${{ matrix.arch }}
         fi
     
     - name: Upload artifact

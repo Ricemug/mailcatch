@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"fakesmtp/internal/config"
-	"fakesmtp/internal/models"
-	"fakesmtp/internal/smtp"
-	"fakesmtp/internal/storage"
-	"fakesmtp/internal/web"
+	"mailcatch/internal/config"
+	"mailcatch/internal/models"
+	"mailcatch/internal/smtp"
+	"mailcatch/internal/storage"
+	"mailcatch/internal/web"
 )
 
 func main() {
@@ -26,7 +26,7 @@ func main() {
 	
 	// Handle daemon mode
 	if cfg.Daemon {
-		log.Printf("Starting FakeSMTP in daemon mode...")
+		log.Printf("Starting MailCatch in daemon mode...")
 		log.Printf("SMTP: %s, HTTP: %s, DB: %s", cfg.SMTPPort, cfg.HTTPPort, cfg.DBPath)
 		log.Printf("Log file: %s", cfg.LogPath)
 	}

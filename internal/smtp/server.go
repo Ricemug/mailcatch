@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"fakesmtp/internal/models"
+	"mailcatch/internal/models"
 )
 
 type Server struct {
@@ -71,7 +71,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 	}
 
 	// Send greeting
-	sess.writeLine("220 fakesmtp ready")
+	sess.writeLine("220 mailcatch ready")
 
 	for {
 		line, err := sess.readLine()

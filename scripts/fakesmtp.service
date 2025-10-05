@@ -1,17 +1,17 @@
 [Unit]
-Description=FakeSMTP Email Testing Server
-Documentation=https://github.com/your-username/fakesmtp
+Description=MailCatch Email Testing Server
+Documentation=https://github.com/your-username/mailcatch
 After=network.target
 Wants=network.target
 
 [Service]
 Type=simple
-User=fakesmtp
-Group=fakesmtp
+User=mailcatch
+Group=mailcatch
 Environment=SMTP_PORT=2525
 Environment=HTTP_PORT=8080
 Environment=CLEAR_ON_SHUTDOWN=true
-ExecStart=/usr/local/bin/fakesmtp --daemon
+ExecStart=/usr/local/bin/mailcatch --daemon
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 RestartSec=5
@@ -22,7 +22,7 @@ NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=yes
-ReadWritePaths=/var/lib/fakesmtp
+ReadWritePaths=/var/lib/mailcatch
 
 # Resource limits
 LimitNOFILE=65536

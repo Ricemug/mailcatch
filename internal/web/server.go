@@ -4,8 +4,8 @@ import (
 	"io/fs"
 	"net/http"
 
-	"fakesmtp/internal/models"
-	"fakesmtp/internal/storage"
+	"mailcatch/internal/models"
+	"mailcatch/internal/storage"
 	"github.com/gin-gonic/gin"
 )
 

@@ -4,8 +4,8 @@
 *.dll
 *.so
 *.dylib
-fakesmtp
-fakesmtp.exe
+mailcatch
+mailcatch.exe
 
 # Test binary, built with `go test -c`
 *.test
@@ -61,3 +61,8 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# AI and internal planning files
+CLAUDE.md
+.claude/
+PROPOSAL.md

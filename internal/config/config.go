@@ -19,7 +19,7 @@ func Load() *Config {
 	cfg := &Config{}
 	
 	// Default log path to temp directory
-	defaultLogPath := filepath.Join(os.TempDir(), "fakesmtp.log")
+	defaultLogPath := filepath.Join(os.TempDir(), "mailcatch.log")
 	
 	flag.StringVar(&cfg.SMTPPort, "smtp-port", "2525", "SMTP server port")
 	flag.StringVar(&cfg.HTTPPort, "http-port", "8080", "HTTP server port")

@@ -1,8 +1,8 @@
-# FakeSMTP GitHub & Donation Strategy Proposal
+# MailCatch GitHub & Donation Strategy Proposal
 
 ## 🎯 Project Overview
 
-**FakeSMTP** is a lightweight, cross-platform fake SMTP server designed for email testing and development. Built with Go for superior performance and zero dependencies, it serves as a modern alternative to smtp4dev.
+**MailCatch** is a lightweight, cross-platform fake SMTP server designed for email testing and development. Built with Go for superior performance and zero dependencies, it serves as a modern alternative to smtp4dev.
 
 ### Key Advantages
 - **Single binary** (~8MB) with zero dependencies
@@ -19,7 +19,7 @@
 - **Enterprise**: Teams requiring reliable, lightweight email testing solutions
 
 ### Competitive Advantages vs smtp4dev
-| Feature | FakeSMTP | smtp4dev |
+| Feature | MailCatch | smtp4dev |
 |---------|----------|----------|
 | Binary Size | 8MB | Requires .NET Runtime |
 | Memory Usage | ~10MB | ~50MB+ |
@@ -176,7 +176,7 @@ ARCHITECTURE.md             # Technical details
    - Modern tech stack, active maintenance
 
 ### Donation Call-to-Actions
-- **Soft**: "If FakeSMTP saves your team time, consider supporting development"
+- **Soft**: "If MailCatch saves your team time, consider supporting development"
 - **Direct**: "Support ongoing development and get priority feature requests"
 - **Value-based**: "Your $5/month helps maintain this free tool for everyone"
 
@@ -194,7 +194,7 @@ ARCHITECTURE.md             # Technical details
 
 ### Legal Considerations
 - **MIT License**: Clear, permissive licensing
-- **Trademark**: Consider registering "FakeSMTP" if successful
+- **Trademark**: Consider registering "MailCatch" if successful
 - **Privacy**: Transparent data handling, no tracking
 
 ## 📅 Implementation Timeline

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"fakesmtp/internal/models"
+	"mailcatch/internal/models"
 	_ "github.com/mattn/go-sqlite3"
 )
 

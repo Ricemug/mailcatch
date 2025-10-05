@@ -1,4 +1,4 @@
-# FakeSMTP
+# MailCatch
 
 輕量級跨平台假 SMTP 伺服器，專為郵件測試與開發而設計。
 
@@ -33,31 +33,34 @@
 
 ```bash
 # macOS
-chmod +x fakesmtp-darwin-arm64
-./fakesmtp-darwin-arm64
+chmod +x mailcatch-darwin-arm64
+./mailcatch-darwin-arm64
 
 # Linux
-chmod +x fakesmtp-linux-amd64
-./fakesmtp-linux-amd64
+chmod +x mailcatch-linux-amd64
+./mailcatch-linux-amd64
 
 # Windows
-fakesmtp-windows-amd64.exe
+mailcatch-windows-amd64.exe
 ```
 
 ### Docker/Podman
 
 ```bash
 # 快速啟動
-docker run -p 2525:2525 -p 8080:8080 fakesmtp:latest
+docker run -p 2525:2525 -p 8080:8080 mailcatch:latest
 
 # 持久化資料
 docker run -p 2525:2525 -p 8080:8080 \
   -v ./data:/app/data \
   -v ./logs:/app/logs \
-  fakesmtp:latest
+  mailcatch:latest
 
 # Podman (相同指令)
-podman run -p 2525:2525 -p 8080:8080 fakesmtp:latest
+podman run -p 2525:2525 -p 8080:8080 mailcatch:latest
+
+# Podman + Systemd (推薦)
+./scripts/setup-podman-systemd.sh
 ```
 
 ### 存取方式
@@ -70,13 +73,13 @@ podman run -p 2525:2525 -p 8080:8080 fakesmtp:latest
 ### 命令列參數
 
 ```bash
-./fakesmtp [選項]
+./mailcatch [選項]
 
 選項:
   --smtp-port=2525              SMTP 伺服器埠號
   --http-port=8080              Web 介面埠號
   --db-path=./data/emails.db    資料庫檔案路徑
-  --log-path=/tmp/fakesmtp.log  日誌檔案路徑
+  --log-path=/tmp/mailcatch.log  日誌檔案路徑
   --clear-on-shutdown=true      程式停止時清空郵件
   --daemon=false                背景執行模式
   --help                        顯示幫助資訊
@@ -87,7 +90,7 @@ podman run -p 2525:2525 -p 8080:8080 fakesmtp:latest
 ```bash
 export SMTP_PORT=1025
 export HTTP_PORT=3000
-export LOG_PATH=/var/log/fakesmtp.log
+export LOG_PATH=/var/log/mailcatch.log
 export CLEAR_ON_SHUTDOWN=false
 export DAEMON=true
 ```
@@ -96,16 +99,16 @@ export DAEMON=true
 
 ```bash
 # 基本使用
-./fakesmtp
+./mailcatch
 
 # 自訂埠號
-./fakesmtp --smtp-port=1025 --http-port=3000
+./mailcatch --smtp-port=1025 --http-port=3000
 
 # 背景執行
-./fakesmtp --daemon --log-path=/var/log/fakesmtp.log
+./mailcatch --daemon --log-path=/var/log/mailcatch.log
 
 # 重啟時保留郵件
-./fakesmtp --clear-on-shutdown=false
+./mailcatch --clear-on-shutdown=false
 ```
 
 ## 發送測試郵件
@@ -116,7 +119,7 @@ export DAEMON=true
 import smtplib
 from email.mime.text import MIMEText
 
-msg = MIMEText("來自 FakeSMTP 的問候！")
+msg = MIMEText("來自 MailCatch 的問候！")
 msg['Subject'] = '測試郵件'
 msg['From'] = 'sender@example.com'
 msg['To'] = 'recipient@example.com'
@@ -162,15 +165,15 @@ Subject: 測試郵件
 QUIT
 ```
 
-## Docker 使用
+## Docker/Podman 使用
 
 ### Docker Compose
 
 ```yaml
 version: '3.8'
 services:
-  fakesmtp:
-    image: fakesmtp:latest
+  mailcatch:
+    image: mailcatch:latest
     ports:
       - "2525:2525"
       - "8080:8080"
@@ -183,6 +186,23 @@ services:
 ```
 
 執行: `docker-compose up -d`
+
+### Podman + Systemd (推薦)
+
+使用 rootless 容器和 systemd 服務管理：
+
+```bash
+# 快速安裝
+./scripts/setup-podman-systemd.sh
+
+# 自訂配置
+./scripts/setup-podman-systemd.sh --smtp-port 1025 --web-port 3000
+
+# 啟用開機自啟動
+sudo loginctl enable-linger $USER
+```
+
+詳細文檔: [PODMAN_SYSTEMD.md](PODMAN_SYSTEMD.md)
 
 ## API 參考
 
@@ -216,14 +236,14 @@ lsof -i :2525
 netstat -tulpn | grep 2525
 
 # 使用不同埠號
-./fakesmtp --smtp-port=1025
+./mailcatch --smtp-port=1025
 ```
 
 ### 權限問題
 
 ```bash
 # 設定執行權限
-chmod +x fakesmtp-*
+chmod +x mailcatch-*
 
 # 修正 Docker volume 權限
 sudo chown -R 1000:1000 ./data ./logs
@@ -236,12 +256,29 @@ sudo chown -R 1000:1000 ./data ./logs
 rm -f data/emails.bolt
 
 # 檢查日誌
-tail -f /tmp/fakesmtp.log
+tail -f /tmp/mailcatch.log
 ```
 
 ## 授權條款
 
 MIT 授權 - 詳見 [LICENSE](LICENSE) 檔案。
+
+---
+
+## 支持這個專案
+
+如果 MailCatch 對您的開發工作有所幫助，請考慮支持開發：
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-ff5f5f?logo=ko-fi)](https://ko-fi.com/ivanh0906)
+
+### 其他支持方式
+
+- ⭐ 在 GitHub 上**給專案加星**
+- 🐛 **回報錯誤**並提出功能建議
+- 🤝 **貢獻程式碼** - 請參閱 [CONTRIBUTING.md](.github/CONTRIBUTING.md)
+- 📢 **分享**給您的團隊和社群
+
+您的支持幫助為整個社群維護和改進 MailCatch！
 
 ---
 

@@ -1,4 +1,4 @@
-module fakesmtp
+module mailcatch
 
 go 1.21
 
