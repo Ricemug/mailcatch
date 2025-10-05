@@ -1,5 +1,7 @@
 # MailCatch
 
+[English](README.md) | [繁體中文](README_zh-TW.md)
+
 A lightweight, cross-platform fake SMTP server for email testing and development.
 
 ![Go Version](https://img.shields.io/badge/go-1.21+-blue)

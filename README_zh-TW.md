@@ -1,5 +1,7 @@
 # MailCatch
 
+[English](README.md) | [繁體中文](README_zh-TW.md)
+
 輕量級跨平台假 SMTP 伺服器，專為郵件測試與開發而設計。
 
 ![Go Version](https://img.shields.io/badge/go-1.21+-blue)
