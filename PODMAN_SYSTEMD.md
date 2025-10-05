@@ -1,24 +1,24 @@
-# Podman Rootless Systemd 部署指南
+# Podman Rootless Systemd Deployment Guide
 
-這份指南說明如何使用 Podman rootless 容器和 systemd 用戶服務來部署 MailCatch。
+This guide explains how to deploy MailCatch using Podman rootless containers and systemd user services.
 
-## 功能特色
+## Features
 
-- **Rootless 容器**: 不需要 root 權限，提升安全性
-- **Systemd 整合**: 使用 systemd 管理容器生命週期
-- **自動重啟**: 服務失敗時自動重啟
-- **開機啟動**: 可選的開機自動啟動
-- **日誌管理**: 整合 journald 日誌
-- **健康檢查**: 內建容器健康監控
+- **Rootless Containers**: No root privileges required, enhanced security
+- **Systemd Integration**: Use systemd to manage container lifecycle
+- **Auto Restart**: Automatically restart service on failure
+- **Boot Startup**: Optional automatic startup on boot
+- **Log Management**: Integrated with journald logging
+- **Health Checks**: Built-in container health monitoring
 
-## 前置需求
+## Prerequisites
 
-### 系統需求
-- Linux 發行版 (Fedora, RHEL, Ubuntu, Debian 等)
-- systemd (大多數現代 Linux 發行版預設安裝)
+### System Requirements
+- Linux distribution (Fedora, RHEL, Ubuntu, Debian, etc.)
+- systemd (pre-installed on most modern Linux distributions)
 - Podman 3.0+
 
-### 安裝 Podman
+### Install Podman
 
 #### Fedora/RHEL/CentOS
 ```bash
@@ -36,190 +36,190 @@ sudo apt install podman
 sudo pacman -S podman
 ```
 
-## 快速開始
+## Quick Start
 
-### 1. 基本安裝
+### 1. Basic Installation
 ```bash
-# 使用預設設置
+# Use default settings
 ./scripts/setup-podman-systemd.sh
 ```
 
-### 2. 自訂配置安裝
+### 2. Custom Configuration Installation
 ```bash
-# 自訂端口和目錄
+# Customize ports and directories
 ./scripts/setup-podman-systemd.sh \
     --smtp-port 1025 \
     --web-port 3000 \
     --data-dir "$HOME/mailcatch-data"
 ```
 
-### 3. 啟用開機自動啟動
+### 3. Enable Boot Startup
 ```bash
-# 允許用戶服務在開機時啟動（即使用戶未登入）
+# Allow user services to start at boot (even when user is not logged in)
 sudo loginctl enable-linger $USER
 ```
 
-## 腳本選項
+## Script Options
 
 ```bash
-選項:
-  -s, --smtp-port PORT     SMTP 端口 (預設: 2525)
-  -w, --web-port PORT      Web UI 端口 (預設: 8080)
-  -d, --data-dir PATH      數據目錄 (預設: ~/.local/share/mailcatch)
-  -l, --log-dir PATH       日誌目錄 (預設: ~/.local/share/mailcatch/logs)
-  -n, --name NAME          容器名稱 (預設: mailcatch)
-  -i, --image IMAGE        容器映像 (預設: mailcatch:latest)
-  -h, --help               顯示幫助信息
-  --uninstall              移除服務和容器
+Options:
+  -s, --smtp-port PORT     SMTP port (default: 2525)
+  -w, --web-port PORT      Web UI port (default: 8080)
+  -d, --data-dir PATH      Data directory (default: ~/.local/share/mailcatch)
+  -l, --log-dir PATH       Log directory (default: ~/.local/share/mailcatch/logs)
+  -n, --name NAME          Container name (default: mailcatch)
+  -i, --image IMAGE        Container image (default: mailcatch:latest)
+  -h, --help               Show help information
+  --uninstall              Remove service and container
 ```
 
-## 服務管理
+## Service Management
 
-### 基本命令
+### Basic Commands
 ```bash
-# 查看服務狀態
+# View service status
 systemctl --user status mailcatch.service
 
-# 啟動服務
+# Start service
 systemctl --user start mailcatch.service
 
-# 停止服務
+# Stop service
 systemctl --user stop mailcatch.service
 
-# 重啟服務
+# Restart service
 systemctl --user restart mailcatch.service
 
-# 啟用開機啟動
+# Enable boot startup
 systemctl --user enable mailcatch.service
 
-# 禁用開機啟動
+# Disable boot startup
 systemctl --user disable mailcatch.service
 ```
 
-### 查看日誌
+### View Logs
 ```bash
-# 查看所有日誌
+# View all logs
 journalctl --user -u mailcatch.service
 
-# 實時查看日誌
+# View logs in real-time
 journalctl --user -u mailcatch.service -f
 
-# 查看最近的日誌
+# View recent logs
 journalctl --user -u mailcatch.service --since "1 hour ago"
 
-# 查看容器內部日誌
+# View container internal logs
 podman logs mailcatch
 ```
 
-## 故障排除
+## Troubleshooting
 
-### 服務無法啟動
+### Service Won't Start
 
-1. 檢查服務狀態:
+1. Check service status:
 ```bash
 systemctl --user status mailcatch.service
 ```
 
-2. 查看詳細日誌:
+2. View detailed logs:
 ```bash
 journalctl --user -u mailcatch.service --no-pager
 ```
 
-3. 檢查容器狀態:
+3. Check container status:
 ```bash
 podman ps -a
 podman logs mailcatch
 ```
 
-### 端口衝突
+### Port Conflicts
 
-如果端口被佔用，使用不同端口重新安裝:
+If ports are occupied, reinstall with different ports:
 ```bash
 ./scripts/setup-podman-systemd.sh --uninstall
 ./scripts/setup-podman-systemd.sh --smtp-port 1025 --web-port 3000
 ```
 
-### 權限問題
+### Permission Issues
 
-確保數據目錄權限正確:
+Ensure data directory permissions are correct:
 ```bash
 ls -la ~/.local/share/mailcatch
-# 應該屬於你的用戶
+# Should be owned by your user
 ```
 
-### SELinux 問題 (Fedora/RHEL)
+### SELinux Issues (Fedora/RHEL)
 
-如果遇到 SELinux 權限問題:
+If encountering SELinux permission problems:
 ```bash
-# 檢查 SELinux 狀態
+# Check SELinux status
 getenforce
 
-# 暫時禁用 SELinux (不建議)
+# Temporarily disable SELinux (not recommended)
 sudo setenforce 0
 
-# 或設置適當的 SELinux 上下文
+# Or set appropriate SELinux context
 setsebool -P container_manage_cgroup true
 ```
 
-## 進階配置
+## Advanced Configuration
 
-### 自訂環境變數
+### Custom Environment Variables
 
-編輯服務檔案以添加更多環境變數:
+Edit service file to add more environment variables:
 ```bash
-# 編輯服務檔案
+# Edit service file
 systemctl --user edit mailcatch.service
 ```
 
-添加內容:
+Add content:
 ```ini
 [Service]
 Environment=CLEAR_ON_SHUTDOWN=false
 Environment=DAEMON=true
 ```
 
-### 網路配置
+### Network Configuration
 
-預設情況下，容器使用主機網路。如需自訂網路:
+By default, the container uses host network. For custom network:
 
-1. 創建 Podman 網路:
+1. Create Podman network:
 ```bash
 podman network create mailcatch-network
 ```
 
-2. 修改服務檔案中的 `--network` 參數
+2. Modify `--network` parameter in service file
 
-### 資源限制
+### Resource Limits
 
-在服務檔案中添加資源限制:
+Add resource limits in service file:
 ```bash
-# 編輯服務檔案
+# Edit service file
 systemctl --user edit mailcatch.service
 ```
 
-添加內容:
+Add content:
 ```ini
 [Service]
 Environment=PODMAN_EXTRA_ARGS=--memory=256m --cpus=1.0
 ```
 
-## 安全考量
+## Security Considerations
 
-### Rootless 優勢
-- 容器以非特權用戶運行
-- 減少攻擊面
-- 不需要 sudo 權限
+### Rootless Advantages
+- Container runs as unprivileged user
+- Reduced attack surface
+- No sudo privileges required
 
-### 建議的安全設置
-1. 僅綁定到 localhost (預設行為)
-2. 使用防火牆限制訪問
-3. 定期更新容器映像
-4. 監控日誌文件
+### Recommended Security Settings
+1. Bind only to localhost (default behavior)
+2. Use firewall to restrict access
+3. Regularly update container images
+4. Monitor log files
 
-### 防火牆設置
+### Firewall Setup
 ```bash
-# 僅允許本地連接 (預設)
-# 如需從外部訪問，配置防火牆:
+# Only allow local connections (default)
+# If external access is needed, configure firewall:
 
 # firewalld (Fedora/RHEL)
 sudo firewall-cmd --add-port=2525/tcp --permanent
@@ -231,37 +231,37 @@ sudo ufw allow 2525/tcp
 sudo ufw allow 8080/tcp
 ```
 
-## 移除服務
+## Remove Service
 
-完全移除 MailCatch 服務:
+Completely remove MailCatch service:
 ```bash
 ./scripts/setup-podman-systemd.sh --uninstall
 ```
 
-這將:
-- 停止並禁用 systemd 服務
-- 移除服務檔案
-- 停止並刪除容器
-- 保留數據檔案 (需手動刪除)
+This will:
+- Stop and disable systemd service
+- Remove service file
+- Stop and delete container
+- Preserve data files (manual deletion required)
 
-手動清理數據:
+Manual data cleanup:
 ```bash
 rm -rf ~/.local/share/mailcatch
 ```
 
-## 與 Docker Compose 比較
+## Comparison with Docker Compose
 
-| 特性 | Docker Compose | Podman + Systemd |
-|------|----------------|-------------------|
-| 權限需求 | 需要 Docker daemon (通常需要 root) | Rootless |
-| 系統整合 | 較少 | 深度整合 systemd |
-| 自動重啟 | 透過 restart 策略 | systemd 管理 |
-| 日誌管理 | Docker 日誌驅動 | journald 整合 |
-| 開機啟動 | 需要額外配置 | systemd 原生支持 |
-| 資源控制 | Docker 限制 | systemd + cgroups |
+| Feature | Docker Compose | Podman + Systemd |
+|---------|----------------|-------------------|
+| Privilege Requirements | Needs Docker daemon (usually requires root) | Rootless |
+| System Integration | Less | Deep systemd integration |
+| Auto Restart | Via restart policy | Managed by systemd |
+| Log Management | Docker log drivers | journald integration |
+| Boot Startup | Needs extra configuration | Native systemd support |
+| Resource Control | Docker limits | systemd + cgroups |
 
-## 參考資源
+## References
 
-- [Podman 官方文檔](https://podman.io/getting-started/)
-- [systemd 用戶服務](https://www.freedesktop.org/software/systemd/man/systemd.service.html)
-- [Podman systemd 整合](https://github.com/containers/podman/blob/main/docs/source/markdown/podman-generate-systemd.1.md)
+- [Podman Official Documentation](https://podman.io/getting-started/)
+- [systemd User Services](https://www.freedesktop.org/software/systemd/man/systemd.service.html)
+- [Podman systemd Integration](https://github.com/containers/podman/blob/main/docs/source/markdown/podman-generate-systemd.1.md)
