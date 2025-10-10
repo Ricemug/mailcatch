@@ -5,14 +5,31 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
+)
+
+const (
+	// Time allowed to write a message to the peer
+	writeWait = 10 * time.Second
+
+	// Time allowed to read the next pong message from the peer
+	pongWait = 60 * time.Second
+
+	// Send pings to peer with this period (must be less than pongWait)
+	pingPeriod = (pongWait * 9) / 10
+
+	// Maximum message size allowed from peer
+	maxMessageSize = 512
 )
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true // Allow all origins for development
 	},
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
 }
 
 type WebSocketHub struct {
@@ -81,23 +98,57 @@ func (hub *WebSocketHub) HandleWebSocket(w http.ResponseWriter, r *http.Request)
 		log.Printf("WebSocket upgrade error: %v", err)
 		return
 	}
-	
+
 	hub.register <- conn
-	
+
 	// Handle client disconnection
 	defer func() {
 		hub.unregister <- conn
 	}()
-	
-	// Keep connection alive and handle pings
-	for {
-		messageType, _, err := conn.ReadMessage()
-		if err != nil {
-			break
+
+	// Configure connection
+	conn.SetReadLimit(maxMessageSize)
+	conn.SetReadDeadline(time.Now().Add(pongWait))
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
+
+	// Start ping ticker
+	ticker := time.NewTicker(pingPeriod)
+	defer ticker.Stop()
+
+	// Channel to signal reader goroutine exit
+	done := make(chan struct{})
+
+	// Start reader goroutine
+	go func() {
+		defer close(done)
+		for {
+			messageType, _, err := conn.ReadMessage()
+			if err != nil {
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+					log.Printf("WebSocket read error: %v", err)
+				}
+				break
+			}
+
+			if messageType == websocket.CloseMessage {
+				break
+			}
 		}
-		
-		if messageType == websocket.CloseMessage {
-			break
+	}()
+
+	// Send pings
+	for {
+		select {
+		case <-ticker.C:
+			conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
+		case <-done:
+			return
 		}
 	}
 }
