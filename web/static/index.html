@@ -58,21 +58,25 @@
             const connectWebSocket = () => {
                 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
                 const wsUrl = `${protocol}//${window.location.host}/ws`;
-                
+
                 wsRef.current = new WebSocket(wsUrl);
-                
+
                 wsRef.current.onopen = () => {
                     setIsConnected(true);
                     console.log('WebSocket connected');
                 };
-                
-                wsRef.current.onclose = () => {
+
+                wsRef.current.onclose = (event) => {
                     setIsConnected(false);
-                    console.log('WebSocket disconnected');
+                    console.log('WebSocket disconnected', event.code, event.reason);
                     // Reconnect after 3 seconds
                     setTimeout(connectWebSocket, 3000);
                 };
-                
+
+                wsRef.current.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                };
+
                 wsRef.current.onmessage = (event) => {
                     try {
                         const message = JSON.parse(event.data);
