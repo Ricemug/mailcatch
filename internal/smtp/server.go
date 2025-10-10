@@ -2,9 +2,16 @@ package smtp
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"log"
+	"mime"
+	"mime/multipart"
+	"mime/quotedprintable"
 	"net"
+	"net/mail"
 	"strings"
 	"time"
 
@@ -183,45 +190,121 @@ func (sess *session) handleData(onEmail func(*models.Email)) {
 }
 
 func (sess *session) parseEmail() *models.Email {
-	lines := strings.Split(sess.data, "\n")
-	
 	email := &models.Email{
 		From:      sess.from,
 		To:        strings.Join(sess.to, ", "),
 		Raw:       sess.data,
 		CreatedAt: time.Now(),
 	}
-	
-	// Simple header parsing
-	inHeaders := true
-	var bodyLines []string
-	
-	for _, line := range lines {
-		line = strings.TrimRight(line, "\r")
-		
-		if inHeaders {
-			if line == "" {
-				inHeaders = false
-				continue
-			}
-			
-			if strings.HasPrefix(strings.ToLower(line), "subject:") {
-				email.Subject = strings.TrimSpace(line[8:])
-			}
+
+	// Parse using net/mail
+	msg, err := mail.ReadMessage(strings.NewReader(sess.data))
+	if err != nil {
+		log.Printf("Error parsing email: %v", err)
+		// Fallback to simple parsing
+		email.Body = sess.data
+		return email
+	}
+
+	// Extract headers
+	email.Subject = msg.Header.Get("Subject")
+
+	// Decode subject if needed
+	dec := new(mime.WordDecoder)
+	if decodedSubject, err := dec.DecodeHeader(email.Subject); err == nil {
+		email.Subject = decodedSubject
+	}
+
+	// Parse body
+	contentType := msg.Header.Get("Content-Type")
+	if contentType == "" {
+		// Plain text email
+		body, _ := io.ReadAll(msg.Body)
+		email.Body = string(body)
+		return email
+	}
+
+	mediaType, params, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		body, _ := io.ReadAll(msg.Body)
+		email.Body = string(body)
+		return email
+	}
+
+	if strings.HasPrefix(mediaType, "multipart/") {
+		sess.parseMultipart(msg.Body, params["boundary"], email)
+	} else {
+		// Single part message
+		body, _ := io.ReadAll(msg.Body)
+		decoded := sess.decodeContent(string(body), msg.Header.Get("Content-Transfer-Encoding"))
+
+		if strings.HasPrefix(mediaType, "text/html") {
+			email.HTML = decoded
+			email.Body = decoded
 		} else {
-			bodyLines = append(bodyLines, line)
+			email.Body = decoded
 		}
 	}
-	
-	email.Body = strings.Join(bodyLines, "\n")
-	
-	// Simple HTML detection
-	if strings.Contains(strings.ToLower(email.Body), "<html") ||
-		strings.Contains(strings.ToLower(email.Body), "<!doctype") {
-		email.HTML = email.Body
-	}
-	
+
 	return email
+}
+
+func (sess *session) parseMultipart(body io.Reader, boundary string, email *models.Email) {
+	mr := multipart.NewReader(body, boundary)
+
+	for {
+		part, err := mr.NextPart()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Printf("Error reading multipart: %v", err)
+			break
+		}
+
+		contentType := part.Header.Get("Content-Type")
+		mediaType, _, _ := mime.ParseMediaType(contentType)
+		transferEncoding := part.Header.Get("Content-Transfer-Encoding")
+
+		partBody, _ := io.ReadAll(part)
+		decoded := sess.decodeContent(string(partBody), transferEncoding)
+
+		if strings.HasPrefix(mediaType, "text/plain") {
+			if email.Body == "" {
+				email.Body = decoded
+			}
+		} else if strings.HasPrefix(mediaType, "text/html") {
+			email.HTML = decoded
+		} else if strings.HasPrefix(mediaType, "multipart/") {
+			// Nested multipart
+			_, params, _ := mime.ParseMediaType(contentType)
+			sess.parseMultipart(bytes.NewReader(partBody), params["boundary"], email)
+		}
+	}
+}
+
+func (sess *session) decodeContent(content string, encoding string) string {
+	encoding = strings.ToLower(strings.TrimSpace(encoding))
+
+	switch encoding {
+	case "base64":
+		decoded, err := base64.StdEncoding.DecodeString(content)
+		if err != nil {
+			log.Printf("Error decoding base64: %v", err)
+			return content
+		}
+		return string(decoded)
+	case "quoted-printable":
+		reader := quotedprintable.NewReader(strings.NewReader(content))
+		decoded, err := io.ReadAll(reader)
+		if err != nil {
+			log.Printf("Error decoding quoted-printable: %v", err)
+			return content
+		}
+		return string(decoded)
+	default:
+		return content
+	}
 }
 
 func (sess *session) reset() {
